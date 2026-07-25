@@ -11,7 +11,6 @@ import requests
 import streamlit as st
 import xgboost as xgb
 
-
 # ============================================================
 # PAGE CONFIG
 # ============================================================
@@ -412,7 +411,7 @@ st.markdown(
 # PATHS AND CONFIG
 # ============================================================
 
-BASE = Path(r"C:\Users\harri\OneDrive\Documents\SepsisGuard AI")
+BASE = Path(__file__).parent
 DATA_PATH = BASE / "held_out_test_patients.csv"
 
 MODEL_DIR = BASE / "model_artifacts"
@@ -842,7 +841,7 @@ def create_gauge(risk: float):
 
     figure.update_layout(
         height=270,
-        margin=dict(l=20, r=20, t=45, b=15),
+        margin={"l": 20, "r": 20, "t": 45, "b": 15},
         paper_bgcolor="#ffffff",
     )
 
@@ -877,23 +876,22 @@ def create_contribution_chart(factors):
 
     figure.update_layout(
         height=330,
-        margin=dict(l=10, r=10, t=10, b=35),
-        xaxis=dict(
-            title="Relative contribution",
-            range=[-1.05, 1.05],
-            zeroline=True,
-            zerolinecolor="#334155",
-            showgrid=True,
-            gridcolor="#e5e7eb",
-        ),
-        yaxis=dict(title=""),
+        margin={"l": 10, "r": 10, "t": 10, "b": 35},
+        xaxis={
+            "title": "Relative contribution",
+            "range": [-1.05, 1.05],
+            "zeroline": True,
+            "zerolinecolor": "#334155",
+            "showgrid": True,
+            "gridcolor": "#e5e7eb",
+        },
+        yaxis={"title": ""},
         showlegend=False,
         paper_bgcolor="#ffffff",
         plot_bgcolor="#ffffff",
     )
 
     return figure
-
 
 
 def create_factor_pie_chart(factors):
@@ -923,20 +921,21 @@ def create_factor_pie_chart(factors):
             "font": {"size": 17},
         },
         height=330,
-        margin=dict(l=15, r=15, t=55, b=15),
+        margin={"l": 15, "r": 15, "t": 55, "b": 15},
         showlegend=True,
-        legend=dict(
-            orientation="h",
-            yanchor="top",
-            y=-0.08,
-            xanchor="center",
-            x=0.5,
-            font={"size": 12},
-        ),
+        legend={
+            "orientation": "h",
+            "yanchor": "top",
+            "y": -0.08,
+            "xanchor": "center",
+            "x": 0.5,
+            "font": {"size": 12},
+        },
         paper_bgcolor="#ffffff",
     )
 
     return figure
+
 
 def plain_language_summary(factors, category):
     increased = [
@@ -961,7 +960,8 @@ def plain_language_summary(factors, category):
 
     if decreased:
         parts.append(
-            "Factors reducing the sepsis propensity included: " + " ".join(decreased[:2])
+            "Factors reducing the sepsis propensity included: "
+            + " ".join(decreased[:2])
         )
 
     if not parts:
@@ -993,7 +993,7 @@ def explanation_payload(
     age_value = patient.get("Age", np.nan)
 
     # The backend requires an integer age.
-    age = 0 if pd.isna(age_value) else int(round(float(age_value)))
+    age = 0 if pd.isna(age_value) else round(float(age_value))
 
     gender_value = patient.get("Gender", np.nan)
 
@@ -1007,10 +1007,7 @@ def explanation_payload(
 
     category = risk_category(risk)
 
-    clinical_relevance = " ".join(
-        factor["clinical_text"]
-        for factor in factors[:5]
-    )
+    clinical_relevance = " ".join(factor["clinical_text"] for factor in factors[:5])  # noqa: F841
 
     return {
         "patient_id": str(patient_id),
@@ -1088,14 +1085,14 @@ def request_explanation(payload):
     return explanation
 
 
-
-
 # ============================================================
 # DASHBOARD AND CHAT HELPERS
 # ============================================================
 
 
-def build_prediction_table(model, patients: pd.DataFrame, feature_columns: list[str]) -> pd.DataFrame:
+def build_prediction_table(
+    model, patients: pd.DataFrame, feature_columns: list[str]
+) -> pd.DataFrame:
     """Generate one cached sepsis risk per held-out patient for the demo dashboard."""
     matrix = patients.reindex(columns=feature_columns).astype("float32")
     risks = model.predict_proba(matrix)[:, 1]
@@ -1103,20 +1100,26 @@ def build_prediction_table(model, patients: pd.DataFrame, feature_columns: list[
     result = patients[["patient_id"]].copy()
     result["risk"] = risks
     result["risk_percent"] = (result["risk"] * 100).round(1)
-    result["risk_category"] = result["risk"].apply(lambda value: risk_category(float(value))["label"])
+    result["risk_category"] = result["risk"].apply(
+        lambda value: risk_category(float(value))["label"]
+    )
     return result
 
 
 def get_demo_panel(predictions: pd.DataFrame, panel_size: int = 24) -> pd.DataFrame:
     """Create a stable demo patient panel with a mix of risk categories."""
     high = predictions[predictions["risk_category"] == "High Risk"].nlargest(8, "risk")
-    moderate = predictions[predictions["risk_category"] == "Moderate Risk"].nlargest(8, "risk")
+    moderate = predictions[predictions["risk_category"] == "Moderate Risk"].nlargest(
+        8, "risk"
+    )
     low = predictions[predictions["risk_category"] == "Low Risk"].nsmallest(8, "risk")
 
     panel = pd.concat([high, moderate, low], ignore_index=True)
     if len(panel) < panel_size:
         remainder = predictions[~predictions["patient_id"].isin(panel["patient_id"])]
-        panel = pd.concat([panel, remainder.head(panel_size - len(panel))], ignore_index=True)
+        panel = pd.concat(
+            [panel, remainder.head(panel_size - len(panel))], ignore_index=True
+        )
 
     return panel.head(panel_size)
 
@@ -1186,7 +1189,6 @@ def ask_assistant(question: str, assessment: dict, chat_history=None):
         return request_explanation(payload)
 
 
-
 def render_chat_interface(assessment: dict):
     st.caption(
         "Ask free-text questions about the selected patient. Responses are grounded "
@@ -1238,7 +1240,7 @@ def render_chat_interface(assessment: dict):
                 assessment,
                 chat_history=previous_history[-10:],
             )
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001
             answer = f"The explanation service could not respond.\\n\\n{error}"
 
         st.session_state["chat_messages"].append(
@@ -1248,7 +1250,7 @@ def render_chat_interface(assessment: dict):
         with st.chat_message("assistant"):
             st.markdown(answer)
 
-    if st.session_state.get("chat_messages"):
+    if st.session_state.get("chat_messages"):  # noqa: SIM102
         if st.button("Clear conversation", key="dialog_clear_chat"):
             st.session_state["chat_messages"] = []
             st.rerun()
@@ -1265,6 +1267,7 @@ def render_chat_interface(assessment: dict):
 
 
 if hasattr(st, "dialog"):
+
     @st.dialog("Ask SepsisGuard AI", width="large")
     def open_chat_dialog():
         current = st.session_state.get("assessment")
@@ -1308,8 +1311,12 @@ if not st.session_state["authenticated"]:
         with st.form("login_form"):
             st.subheader("Clinician sign in")
             username = st.text_input("Username", placeholder="doctor")
-            password = st.text_input("Password", type="password", placeholder="sepsisguard")
-            submitted = st.form_submit_button("Sign in", type="primary", use_container_width=True)
+            password = st.text_input(
+                "Password", type="password", placeholder="sepsisguard"
+            )
+            submitted = st.form_submit_button(
+                "Sign in", type="primary", use_container_width=True
+            )
 
         st.caption("Demo credentials: doctor / sepsisguard")
 
@@ -1330,7 +1337,7 @@ if not st.session_state["authenticated"]:
 try:
     model, feature_columns = load_artifacts()
     patients = load_patients()
-except Exception as error:
+except Exception as error:  # noqa: BLE001
     st.error("The model or patient data could not be loaded.")
     st.exception(error)
     st.stop()
@@ -1376,7 +1383,7 @@ if page == "Dashboard":
     st.markdown(
         f"""
 <div class="dashboard-hero">
-    <h2>Welcome, {html.escape(st.session_state.get('clinician_name', 'Clinician'))}</h2>
+    <h2>Welcome, {html.escape(st.session_state.get("clinician_name", "Clinician"))}</h2>
     <p>Review the demo patient panel and open a patient assessment.</p>
 </div>
 """,
@@ -1394,13 +1401,17 @@ if page == "Dashboard":
     metric_4.metric("Low risk", low_count)
 
     st.markdown("### Patient queue")
-    st.caption("This is a demonstration queue created from held-out evaluation patients.")
+    st.caption(
+        "This is a demonstration queue created from held-out evaluation patients."
+    )
 
     queue_left, queue_right = st.columns([1.3, 0.7], gap="large")
 
     with queue_left:
         queue_table = demo_panel.copy()
-        queue_table["Sepsis risk"] = queue_table["risk_percent"].map(lambda value: f"{value:.1f}%")
+        queue_table["Sepsis risk"] = queue_table["risk_percent"].map(
+            lambda value: f"{value:.1f}%"
+        )
         queue_table = queue_table.rename(
             columns={
                 "patient_id": "Patient ID",
@@ -1448,7 +1459,9 @@ else:
         if st.session_state.get("assessment"):
             current_id = st.session_state["assessment"]["patient_id"]
 
-        default_index = patient_ids.index(current_id) if current_id in patient_ids else None
+        default_index = (
+            patient_ids.index(current_id) if current_id in patient_ids else None
+        )
         selected_id = st.selectbox(
             "Patient ID",
             patient_ids,
@@ -1466,7 +1479,7 @@ else:
             try:
                 load_assessment(selected_id, patients, model, feature_columns)
                 st.rerun()
-            except Exception as error:
+            except Exception as error:  # noqa: BLE001
                 st.error(str(error))
 
         st.caption(
@@ -1475,7 +1488,9 @@ else:
         st.markdown("</div>", unsafe_allow_html=True)
 
         if st.session_state.get("assessment"):
-            render_patient_snapshot(pd.Series(st.session_state["assessment"]["patient"]))
+            render_patient_snapshot(
+                pd.Series(st.session_state["assessment"]["patient"])
+            )
 
     assessment = st.session_state.get("assessment")
 
@@ -1497,7 +1512,7 @@ else:
 
             age = patient.get("Age", np.nan)
             gender_value = patient.get("Gender", np.nan)
-            age_text = "Unknown" if pd.isna(age) else str(int(round(float(age))))
+            age_text = "Unknown" if pd.isna(age) else str(round(float(age)))
             gender_text = (
                 "Unknown"
                 if pd.isna(gender_value)
@@ -1541,7 +1556,11 @@ else:
                 unsafe_allow_html=True,
             )
 
-            st.plotly_chart(create_gauge(risk), use_container_width=True, config={"displayModeBar": False})
+            st.plotly_chart(
+                create_gauge(risk),
+                use_container_width=True,
+                config={"displayModeBar": False},
+            )
 
     if assessment is not None:
         patient = pd.Series(assessment["patient"])
@@ -1617,7 +1636,9 @@ else:
 
 # Floating AI launcher.
 with st.container(key="floating_chat_launcher"):
-    if st.button("💬 Ask SepsisGuard AI", key="open_floating_chat", use_container_width=True):
+    if st.button(
+        "💬 Ask SepsisGuard AI", key="open_floating_chat", use_container_width=True
+    ):
         if st.session_state.get("assessment") is None:
             st.warning("Select a patient and generate an assessment first.")
         elif hasattr(st, "dialog"):
@@ -1625,7 +1646,9 @@ with st.container(key="floating_chat_launcher"):
         else:
             st.session_state["show_inline_chat_fallback"] = True
 
-if st.session_state.get("show_inline_chat_fallback") and st.session_state.get("assessment"):
+if st.session_state.get("show_inline_chat_fallback") and st.session_state.get(
+    "assessment"
+):
     st.markdown("---")
     st.subheader("Ask SepsisGuard AI")
     render_chat_interface(st.session_state["assessment"])
