@@ -1,0 +1,51 @@
+{
+  "model_name": "Tuned_XGBoost_NativeMissing",
+  "missing_value_handling": "Native XGBoost NaN handling",
+  "class_imbalance_handling": "scale_pos_weight",
+  "hyperparameter_selection_metric": "Average Precision / AUPRC",
+  "best_params": {
+    "subsample": 0.8,
+    "reg_lambda": 10,
+    "reg_alpha": 0.1,
+    "n_estimators": 400,
+    "min_child_weight": 5,
+    "max_depth": 5,
+    "learning_rate": 0.05,
+    "gamma": 0.3,
+    "colsample_bytree": 1.0
+  },
+  "threshold_selection_rule": "Best_Youden_J",
+  "selected_threshold": 0.3,
+  "default_threshold_metrics": {
+    "Model": "Tuned_XGBoost_NativeMissing",
+    "Missing_Strategy": "Native XGBoost NaN handling",
+    "AUROC": 0.8755,
+    "AUPRC": 0.4658,
+    "Precision": 0.3503,
+    "Recall/Sensitivity": 0.6094,
+    "Specificity": 0.9112,
+    "F1-score": 0.4449,
+    "Runtime_sec": 574.09,
+    "TN": 6684,
+    "FP": 651,
+    "FN": 225,
+    "TP": 351,
+    "Best_Params": "{\"subsample\": 0.8, \"reg_lambda\": 10, \"reg_alpha\": 0.1, \"n_estimators\": 400, \"min_child_weight\": 5, \"max_depth\": 5, \"learning_rate\": 0.05, \"gamma\": 0.3, \"colsample_bytree\": 1.0}"
+  },
+  "selected_threshold_metrics": {
+    "Model": "Tuned_XGBoost_NativeMissing_SelectedThreshold_0.3",
+    "Missing_Strategy": "Native XGBoost NaN handling",
+    "AUROC": 0.8755,
+    "AUPRC": 0.4658,
+    "Precision": 0.2367,
+    "Recall/Sensitivity": 0.7812,
+    "Specificity": 0.8022,
+    "F1-score": 0.3633,
+    "Runtime_sec": 0.0,
+    "TN": 5884,
+    "FP": 1451,
+    "FN": 126,
+    "TP": 450,
+    "Best_Params": "{\"subsample\": 0.8, \"reg_lambda\": 10, \"reg_alpha\": 0.1, \"n_estimators\": 400, \"min_child_weight\": 5, \"max_depth\": 5, \"learning_rate\": 0.05, \"gamma\": 0.3, \"colsample_bytree\": 1.0}"
+  }
+}
